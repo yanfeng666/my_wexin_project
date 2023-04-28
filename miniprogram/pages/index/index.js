@@ -2,141 +2,113 @@
 // const app = getApp()
 const { envList } = require('../../envList.js');
 
+const TOTAL_TIME = 30 // 游戏总时间（秒）
+const HOLES_COUNT = 9 // 地鼠洞口数量
+let MOLE_SHOW_TIME = 1000 // 地鼠出现时间（毫秒）
+let MOLE_HIDE_TIME = 500 // 地鼠隐藏时间（毫秒）
+
 Page({
   data: {
-    showUploadTip: false,
-    powerList: [{
-      title: '云函数',
-      tip: '安全、免鉴权运行业务代码',
-      showItem: false,
-      item: [{
-        title: '获取OpenId',
-        page: 'getOpenId'
-      },
-      //  {
-      //   title: '微信支付'
-      // },
-       {
-        title: '生成小程序码',
-        page: 'getMiniProgramCode'
-      },
-      // {
-      //   title: '发送订阅消息',
-      // }
-    ]
-    }, {
-      title: '数据库',
-      tip: '安全稳定的文档型数据库',
-      showItem: false,
-      item: [{
-        title: '创建集合',
-        page: 'createCollection'
-      }, {
-        title: '更新记录',
-        page: 'updateRecord'
-      }, {
-        title: '查询记录',
-        page: 'selectRecord'
-      }, {
-        title: '聚合操作',
-        page: 'sumRecord'
-      }]
-    }, {
-      title: '云存储',
-      tip: '自带CDN加速文件存储',
-      showItem: false,
-      item: [{
-        title: '上传文件',
-        page: 'uploadFile'
-      }]
-    }, {
-      title: '云托管',
-      tip: '不限语言的全托管容器服务',
-      showItem: false,
-      item: [{
-        title: '部署服务',
-        page: 'deployService'
-      }]
-    }],
-    envList,
-    selectedEnv: envList[0],
-    haveCreateCollection: false
+    score: 0,
+    timer: TOTAL_TIME,
+    holes: [],
+    classList:[1,2,3],
+    modalState:false
   },
 
-  onClickPowerInfo(e) {
-    const index = e.currentTarget.dataset.index;
-    const powerList = this.data.powerList;
-    powerList[index].showItem = !powerList[index].showItem;
-    if (powerList[index].title === '数据库' && !this.data.haveCreateCollection) {
-      this.onClickDatabase(powerList);
+  onLoad: function () {
+    // this.initHoles()
+    // this.startGame()
+  },
+
+  initHoles: function () {
+    const holes = []
+    for (let i = 0; i < HOLES_COUNT; i++) {
+      holes.push({
+        show: false
+      })
+    }
+    this.setData({
+      holes: holes
+    })
+  },
+
+  startGame: function () {
+    this.timer = setInterval(() => {
+      let timer = this.data.timer - 1
+      if (timer >= 0) {
+        this.setData({
+          timer: timer
+        })
+        this.showMole()
+      } else {
+        clearInterval(this.timer)
+        wx.showModal({
+          title: '游戏结束',
+          content: '您的得分为' + this.data.score,
+          showCancel: false,
+          success: function (res) {
+            wx.redirectTo({
+              url: '/pages/index/index'
+            })
+          }
+        })
+      }
+    }, 1000)
+  },
+
+  showMole: function () {
+    const holes = this.data.holes
+    const index = Math.floor(Math.random() * HOLES_COUNT)
+    holes[index].show = true
+    this.setData({
+      holes: holes
+    })
+    setTimeout(() => {
+      holes[index].show = false
+      this.setData({
+        holes: holes
+      })
+    }, MOLE_SHOW_TIME)
+  },
+
+  onTapHole: function (event) {
+    const index = event.currentTarget.dataset.index
+    const holes = this.data.holes
+    if (holes[index].show) {
+      this.setData({
+        score: this.data.score + 1
+      })
     } else {
       this.setData({
-        powerList
-      });
+        score: this.data.score - 1
+      })
     }
   },
-
-  onChangeShowEnvChoose() {
-    wx.showActionSheet({
-      itemList: this.data.envList.map(i => i.alias),
-      success: (res) => {
-        this.onChangeSelectedEnv(res.tapIndex);
-      },
-      fail (res) {
-        console.log(res.errMsg);
-      }
-    });
-  },
-
-  onChangeSelectedEnv(index) {
-    if (this.data.selectedEnv.envId === this.data.envList[index].envId) {
-      return;
-    }
-    const powerList = this.data.powerList;
-    powerList.forEach(i => {
-      i.showItem = false;
-    });
+  showPop:function(e){
     this.setData({
-      selectedEnv: this.data.envList[index],
-      powerList,
-      haveCreateCollection: false
-    });
+      modalState:!this.data.modalState
+    })
   },
+  hidePop:function(e){
+    console.log('eeeeeee',e.currentTarget.dataset.index);
+    let value=e.currentTarget.dataset.index
+    if(value===0){
+       MOLE_SHOW_TIME = 300 // 地鼠出现时间（毫秒）
+       MOLE_HIDE_TIME = 300 // 地鼠隐藏时间（毫秒）
+    }else if(value===1){
+      MOLE_SHOW_TIME = 500 // 地鼠出现时间（毫秒）
+       MOLE_HIDE_TIME = 500 // 地鼠隐藏时间（毫秒）
+    }else if(value===2){
+    MOLE_SHOW_TIME = 800 // 地鼠出现时间（毫秒）
+      MOLE_HIDE_TIME = 500 // 地鼠隐藏时间（毫秒）
+    }
+   this.initHoles()
+    this.startGame()
+ 
+    this.setData({
 
-  jumpPage(e) {
-    wx.navigateTo({
-      url: `/pages/${e.currentTarget.dataset.page}/index?envId=${this.data.selectedEnv.envId}`,
-    });
-  },
-
-  onClickDatabase(powerList) {
-    wx.showLoading({
-      title: '',
-    });
-    wx.cloud.callFunction({
-      name: 'quickstartFunctions',
-      config: {
-        env: this.data.selectedEnv.envId
-      },
-      data: {
-        type: 'createCollection'
-      }
-    }).then((resp) => {
-      if (resp.result.success) {
-        this.setData({
-          haveCreateCollection: true
-        });
-      }
-      this.setData({
-        powerList
-      });
-      wx.hideLoading();
-    }).catch((e) => {
-      console.log(e);
-      this.setData({
-        showUploadTip: true
-      });
-      wx.hideLoading();
-    });
+      modalState:!this.data.modalState
+    })
   }
-});
+})
