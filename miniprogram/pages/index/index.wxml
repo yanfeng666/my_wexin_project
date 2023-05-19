@@ -1,6 +1,6 @@
 <!--index.wxml-->
 
-<view class="title" bindtap='showPop'>小杨点击我选择关卡</view>
+<view class="title" bindtap='showPop'></view>
 <view  class="{{modalState?'show':'hide'}}" >
 <view class="guanqia" wx:for="{{classList}}" wx:key="{{item}}" bindtap="hidePop" data-index="{{index}}">
 {{item}}

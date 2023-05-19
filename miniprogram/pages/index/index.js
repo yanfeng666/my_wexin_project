@@ -94,7 +94,7 @@ Page({
     console.log('eeeeeee',e.currentTarget.dataset.index);
     let value=e.currentTarget.dataset.index
     if(value===0){
-       MOLE_SHOW_TIME = 300 // 地鼠出现时间（毫秒）
+       MOLE_SHOW_TIME = 1100 // 地鼠出现时间（毫秒）
        MOLE_HIDE_TIME = 300 // 地鼠隐藏时间（毫秒）
     }else if(value===1){
       MOLE_SHOW_TIME = 500 // 地鼠出现时间（毫秒）
